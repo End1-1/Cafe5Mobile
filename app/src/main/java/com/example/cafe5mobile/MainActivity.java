@@ -9,8 +9,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
@@ -28,6 +30,8 @@ import android.widget.Toast;
 
 import com.example.cafe5mobile.databinding.ActivityMainBinding;
 import com.example.cafe5mobile.databinding.RvSpeechResultBinding;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -36,20 +40,23 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int RecordAudioRequestCode = 1;
 
     private ActivityMainBinding _b;
     private SpeechRecognizer mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
     private ArrayList<String> mSpeechResult = new ArrayList();
+    private static String mUuid = UUID.randomUUID().toString();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         _b = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(_b.getRoot());
+        _b.btnConnect.setOnClickListener(this);
         _b.rvResult.setLayoutManager(new LinearLayoutManager(this));
         _b.rvResult.setAdapter(new ResultAdapter());
 
@@ -131,8 +138,18 @@ public class MainActivity extends AppCompatActivity {
         });
 
         new Thread(mBroadcastReceiver).start();
-        sendServerRequest();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mLocalBroadcastReceiver, new IntentFilter(Server.LOCAL_MESSAGE_ACTION));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLocalBroadcastReceiver);
     }
 
     @Override
@@ -157,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendServerRequest() {
-        String message = String.format("{\"what\":%d}", Server.WHAT_GETSERVER);
+        String message = String.format("{\"what\":%d, \"uuid\":\"%s\"}", Server.WHAT_GETSERVER, mUuid);
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
         StrictMode.ThreadPolicy policy = new   StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -166,6 +183,17 @@ public class MainActivity extends AppCompatActivity {
             ds.setBroadcast(true);
             DatagramPacket dp = new DatagramPacket(data, data.length, getBroadcastAddress(), Server.PORT);
             ds.send(dp);
+
+            byte[] recvBuf = new byte[15000];
+            DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
+            ds.receive(packet);
+            Log.i("TAG TAG TAG TAG", "Packet received from: " + packet.getAddress().getHostAddress());
+            String datastr = new String(packet.getData()).trim();
+            Log.i("TAG TAG TAG TAG", "Packet received; data: " + datastr);
+            Intent localIntent = new Intent(Server.LOCAL_MESSAGE_ACTION)
+                    .putExtra(Server.DATA_TYPE, Server.BROADCAST_SOCKET_DATA)
+                    .putExtra(Server.SOCKET_REPLY, datastr);
+            LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(localIntent);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -174,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     Runnable mBroadcastReceiver = new Runnable() {
         @Override
         public void run() {
-            receiveBroadcastMessage();
+            //receiveBroadcastMessage();
         }
 
         private void receiveBroadcastMessage() {
@@ -194,11 +222,35 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("TAG TAG TAG TAG", "Packet received; data: " + data);
 
                     Intent localIntent = new Intent(Server.LOCAL_MESSAGE_ACTION)
-                            .putExtra(Server.DATA, data);
+                            .putExtra(Server.DATA_TYPE, Server.BROADCAST_SOCKET_DATA)
+                            .putExtra(Server.SOCKET_REPLY, data);
                     LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(localIntent);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    };
+
+    private BroadcastReceiver mLocalBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getIntExtra(Server.DATA_TYPE, 0)) {
+                case Server.BROADCAST_SOCKET_DATA:
+                    JsonObject jo = JsonParser.parseString(intent.getStringExtra(Server.SOCKET_REPLY)).getAsJsonObject();
+                    if (jo.get("reply") != null) {
+                        switch (jo.get("what").getAsInt()) {
+                            case Server.WHAT_GETSERVER:
+                                if (jo.get("accept").getAsInt() == 1) {
+                                    Preference.setString("server_uuid", jo.get("server_uuid").getAsString());
+                                    _b.btnConnect.setImageDrawable(getDrawable(R.drawable.wifi));
+                                }
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     };
@@ -216,6 +268,15 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btnConnect:
+                sendServerRequest();
+                break;
+        }
     }
 
     class ResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
