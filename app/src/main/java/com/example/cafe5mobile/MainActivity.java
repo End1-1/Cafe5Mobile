@@ -30,6 +30,8 @@ import android.widget.Toast;
 
 import com.example.cafe5mobile.databinding.ActivityMainBinding;
 import com.example.cafe5mobile.databinding.RvSpeechResultBinding;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -42,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends ActivityRoot implements View.OnClickListener {
 
     private static final int RecordAudioRequestCode = 1;
 
@@ -174,12 +176,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void sendServerRequest() {
+        Preference.setString("uuid", mUuid);
         String message = String.format("{\"what\":%d, \"uuid\":\"%s\"}", Server.WHAT_GETSERVER, mUuid);
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
         StrictMode.ThreadPolicy policy = new   StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         try {
             DatagramSocket ds = new DatagramSocket();
+            ds.setSoTimeout(2000);
             ds.setBroadcast(true);
             DatagramPacket dp = new DatagramPacket(data, data.length, getBroadcastAddress(), Server.PORT);
             ds.send(dp);
@@ -187,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             byte[] recvBuf = new byte[15000];
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             ds.receive(packet);
+            Preference.setString("server_ip", packet.getAddress().getHostAddress());
             Log.i("TAG TAG TAG TAG", "Packet received from: " + packet.getAddress().getHostAddress());
             String datastr = new String(packet.getData()).trim();
             Log.i("TAG TAG TAG TAG", "Packet received; data: " + datastr);
@@ -194,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .putExtra(Server.DATA_TYPE, Server.BROADCAST_SOCKET_DATA)
                     .putExtra(Server.SOCKET_REPLY, datastr);
             LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(localIntent);
+            ds.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -246,6 +252,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     _b.btnConnect.setImageDrawable(getDrawable(R.drawable.wifi));
                                 }
                                 break;
+                            case Server.WHAT_PARSE_STORE_STRING:
+                                if (jo.get("error") == null) {
+                                    mSpeechResult.clear();
+                                    _b.rvResult.getAdapter().notifyDataSetChanged();
+                                    Intent suggestIntent = new Intent(MainActivity.this, SuggestGoodsActivity.class);
+                                    suggestIntent.putExtra("data", jo.toString());
+                                    startActivity(suggestIntent);
+                                }
+                                break;
                         }
                     }
                     break;
@@ -281,17 +296,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     class ResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-        private class ResultViewHolder extends RecyclerView.ViewHolder {
+        private class ResultViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
             private RvSpeechResultBinding _vh;
 
             public ResultViewHolder(@NonNull RvSpeechResultBinding vh) {
                 super(vh.getRoot());
+                vh.getRoot().setOnClickListener(this);
                 _vh = vh;
             }
 
             public void onBind(int position) {
                 _vh.txtResult.setText(mSpeechResult.get(position));
+            }
+
+            @Override
+            public void onClick(View view) {
+                int i = getAdapterPosition();
+                String str = mSpeechResult.get(i);
+                JsonObject jo = new JsonObject();
+                jo.addProperty("data", str);
+                sendRequest(Server.WHAT_PARSE_STORE_STRING, jo.toString().replace("\"", "\\\""));
             }
         }
 

@@ -8,4 +8,6 @@ public class Server {
     public static final String SOCKET_REPLY = "socket_reply";
 
     public static final int WHAT_GETSERVER = 1;
+    public static final int WHAT_GETDOC = 2;
+    public static final int WHAT_PARSE_STORE_STRING = 3;
 }
