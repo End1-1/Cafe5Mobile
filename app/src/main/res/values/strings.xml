@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Cafe5Mobile</string>
+    <string name="Quantity">Quantity</string>
+    <string name="unit">Unit</string>
+    <string name="Amount">Amount</string>
+    <string name="Price">Price</string>
 </resources>

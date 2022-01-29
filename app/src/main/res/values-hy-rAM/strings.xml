@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cafe5Mobile</string>
+    <string name="Quantity">Քանակ</string>
+    <string name="unit">ՉՄ</string>
+    <string name="Amount">Գումար</string>
+    <string name="Price">Գին</string>
+</resources>

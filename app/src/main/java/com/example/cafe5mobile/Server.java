@@ -10,4 +10,5 @@ public class Server {
     public static final int WHAT_GETSERVER = 1;
     public static final int WHAT_GETDOC = 2;
     public static final int WHAT_PARSE_STORE_STRING = 3;
+    public static final int WHAT_STORE_APPEND_ITEM = 4;
 }

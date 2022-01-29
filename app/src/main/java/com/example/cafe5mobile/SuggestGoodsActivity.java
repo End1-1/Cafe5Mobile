@@ -2,12 +2,21 @@ package com.example.cafe5mobile;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.cafe5mobile.databinding.ActivitySuggestGoodsBinding;
 import com.example.cafe5mobile.databinding.RvSuggestGoodsBinding;
@@ -33,7 +42,18 @@ public class SuggestGoodsActivity extends ActivityRoot {
         _b.rvSuggestGoods.setAdapter(new GoodsAdapter());
         _b.edtQty.setText(String.valueOf(mGoodsArray.qty));
         _b.txtUnit.setText("");
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, new IntentFilter(Server.LOCAL_MESSAGE_ACTION));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 
     private class GoodsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -54,8 +74,26 @@ public class SuggestGoodsActivity extends ActivityRoot {
 
             @Override
             public void onClick(View view) {
+                if (_b.edtPrice.getText().toString().isEmpty()) {
+                    _b.edtPrice.setText("0");
+                }
+                if (_b.edtQty.getText().toString().isEmpty()) {
+                    _b.edtQty.setText("0");
+                }
+                if (_b.edtAmount.getText().toString().isEmpty()) {
+                    _b.edtAmount.setText("0");
+                }
                 int i = getAdapterPosition();
-                finish();
+                Goods g = mGoodsArray.goods.get(i);
+                JsonObject jo = new JsonObject();
+                jo.addProperty("unit", g.f_unitname);
+                jo.addProperty("id", g.f_id);
+                jo.addProperty("name", g.f_name);
+                jo.addProperty("scancode", g.f_scancode);
+                jo.addProperty("qty", Double.valueOf(_b.edtQty.getText().toString()));
+                jo.addProperty("price", Double.valueOf(_b.edtPrice.getText().toString()));
+                jo.addProperty("amount", Double.valueOf(_b.edtAmount.getText().toString()));
+                SuggestGoodsActivity.this.sendRequest(Server.WHAT_STORE_APPEND_ITEM, jo.toString().replace("\"", "\\\""));
             }
         }
 
@@ -74,6 +112,28 @@ public class SuggestGoodsActivity extends ActivityRoot {
         @Override
         public int getItemCount() {
             return mGoodsArray.goods.size();
+        }
+    };
+
+    BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getIntExtra(Server.DATA_TYPE, 0)) {
+                case Server.BROADCAST_SOCKET_DATA:
+                    JsonObject jo = JsonParser.parseString(intent.getStringExtra(Server.SOCKET_REPLY)).getAsJsonObject();
+                    if (jo.get("reply") != null) {
+                        switch (jo.get("what").getAsInt()) {
+                            case Server.WHAT_STORE_APPEND_ITEM:
+                                if (jo.get("error") == null) {
+                                    finish();
+                                } else {
+                                    Toast.makeText(SuggestGoodsActivity.this, jo.get("message").getAsString(), Toast.LENGTH_LONG).show();
+                                }
+                                break;
+                        }
+                    }
+                    break;
+            }
         }
     };
 }
