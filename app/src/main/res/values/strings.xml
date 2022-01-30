@@ -4,4 +4,8 @@
     <string name="unit">Unit</string>
     <string name="Amount">Amount</string>
     <string name="Price">Price</string>
+    <string name="OK">OK</string>
+    <string name="NO">NO</string>
+    <string name="YES">YES</string>
+    <string name="NoActiveDocument">No active document</string>
 </resources>

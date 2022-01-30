@@ -4,10 +4,15 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.184375" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/drawable/btn_color_move_gray.xml" value="0.25104166666666666" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/drawable/btn_color_move_green.xml" value="0.25104166666666666" />
         <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/activity_main.xml" value="0.18854166666666666" />
-        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/activity_suggest_goods.xml" value="0.19114583333333332" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/activity_suggest_goods.xml" value="0.20416666666666666" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/custom_dialog.xml" value="0.23489583333333333" />
         <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/rv_speech_result.xml" value="0.19655797101449277" />
-        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/rv_suggest_goods.xml" value="0.19114583333333332" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/rv_suggest_goods.xml" value="0.18854166666666666" />
+        <entry key="..\:/Projects/Cafe5Mobile/app/src/main/res/layout/sp_docs_item.xml" value="0.22916666666666666" />
+        <entry key="..\:/Users/user/.gradle/caches/transforms-3/9339927e08badd09bc5459e4ba900d5f/transformed/core-1.7.0/res/layout/custom_dialog.xml" value="0.23489583333333333" />
       </map>
     </option>
   </component>

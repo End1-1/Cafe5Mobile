@@ -5,4 +5,8 @@
     <string name="unit">ՉՄ</string>
     <string name="Amount">Գումար</string>
     <string name="Price">Գին</string>
+    <string name="OK">ԼԱՎ</string>
+    <string name="YES">ԱՅՈ</string>
+    <string name="NO">ՈՉ</string>
+    <string name="NoActiveDocument">Չկա բացված փասթաթուղթ</string>
 </resources>

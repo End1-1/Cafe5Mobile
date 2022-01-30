@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 public class ActivityRoot extends AppCompatActivity  {
 
     protected void sendRequest(int what, String datastr) {
-        String message = String.format("{\"what\":%d, \"uuid\":\"%s\", \"data\":\"%s\"}", what, Preference.getString("uuid"), datastr);
+        String message = String.format("{\"what\":%d, \"uuid\":\"%s\", \"windowuuid\":\"%s\", \"data\":\"%s\"}", what, Preference.getString("uuid"), Preference.getString("windowuuid"), datastr);
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
         StrictMode.ThreadPolicy policy = new   StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);

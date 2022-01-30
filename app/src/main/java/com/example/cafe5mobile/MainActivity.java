@@ -1,6 +1,7 @@
 package com.example.cafe5mobile;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -19,6 +20,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.service.controls.actions.CommandAction;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -26,10 +28,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import com.example.cafe5mobile.databinding.ActivityMainBinding;
 import com.example.cafe5mobile.databinding.RvSpeechResultBinding;
+import com.example.cafe5mobile.databinding.SpDocsItemBinding;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -47,11 +53,18 @@ import java.util.UUID;
 public class MainActivity extends ActivityRoot implements View.OnClickListener {
 
     private static final int RecordAudioRequestCode = 1;
+    private static final int MODE_NAME = 1;
+    private static final int MODE_QTY = 2;
+    private static final int MODE_PRICE = 3;
+    private static final int MODE_AMOUNT = 4;
 
     private ActivityMainBinding _b;
     private SpeechRecognizer mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
     private ArrayList<String> mSpeechResult = new ArrayList();
     private static String mUuid = UUID.randomUUID().toString();
+    private String mDocUuid = "";
+    private int mMode = MODE_NAME;
+    private Documents mDocuments = new Documents();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +74,20 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         _b.btnConnect.setOnClickListener(this);
         _b.rvResult.setLayoutManager(new LinearLayoutManager(this));
         _b.rvResult.setAdapter(new ResultAdapter());
+        _b.docs.setAdapter(new DocsAdapter(this, R.layout.sp_docs_item, mDocuments.documents.toArray(new Documents.Document[0])));
+        _b.docs.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Documents.Document d = mDocuments.documents.get(i);
+                mDocUuid = d.windowid;
+                Preference.setString("windowuuid", mDocUuid);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             checkPermission();
@@ -128,12 +155,70 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         _b.btnMic.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (!isDocConnected()) {
+                    Dlg.createDialog(MainActivity.this, getString(R.string.NoActiveDocument)).setOk(null);
+                }
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP){
                     mSpeechRecognizer.stopListening();
                 }
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
                     _b.btnMic.setImageResource(R.drawable.micw);
                     mSpeechRecognizer.startListening(speechRecognizerIntent);
+                    mMode = MODE_NAME;
+                }
+                return false;
+            }
+        });
+
+        _b.btnMicQty.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (!isDocConnected()) {
+                    Dlg.createDialog(MainActivity.this, getString(R.string.NoActiveDocument)).setOk(null);;
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP){
+                    mSpeechRecognizer.stopListening();
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                    _b.btnMic.setImageResource(R.drawable.micw);
+                    mSpeechRecognizer.startListening(speechRecognizerIntent);
+                    mMode = MODE_QTY;
+                }
+                return false;
+            }
+        });
+
+        _b.btnMicPrice.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (!isDocConnected()) {
+                    Dlg.createDialog(MainActivity.this, getString(R.string.NoActiveDocument)).setOk(null);;
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP){
+                    mSpeechRecognizer.stopListening();
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                    _b.btnMic.setImageResource(R.drawable.micw);
+                    mSpeechRecognizer.startListening(speechRecognizerIntent);
+                    mMode = MODE_PRICE;
+                }
+                return false;
+            }
+        });
+
+        _b.btnMicTotal.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (!isDocConnected()) {
+                    Dlg.createDialog(MainActivity.this, getString(R.string.NoActiveDocument)).setOk(null);;
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP){
+                    mSpeechRecognizer.stopListening();
+                }
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                    _b.btnMic.setImageResource(R.drawable.micw);
+                    mSpeechRecognizer.startListening(speechRecognizerIntent);
+                    mMode = MODE_AMOUNT;
                 }
                 return false;
             }
@@ -143,8 +228,8 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mLocalBroadcastReceiver, new IntentFilter(Server.LOCAL_MESSAGE_ACTION));
     }
 
@@ -202,6 +287,10 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
             ds.close();
         } catch (IOException e) {
             e.printStackTrace();
+            Intent localIntent = new Intent(Server.LOCAL_MESSAGE_ACTION)
+                    .putExtra(Server.DATA_TYPE, Server.BROADCAST_SOCKET_ERROR)
+                    .putExtra(Server.SOCKET_REPLY, e.getMessage());
+            LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(localIntent);
         }
     }
 
@@ -250,6 +339,18 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
                                 if (jo.get("accept").getAsInt() == 1) {
                                     Preference.setString("server_uuid", jo.get("server_uuid").getAsString());
                                     _b.btnConnect.setImageDrawable(getDrawable(R.drawable.wifi));
+                                    JsonObject jdocs = new JsonObject();
+                                    sendRequest(Server.WHAT_GETDOCS, jdocs.toString().replace("\"", "\\\""));
+                                }
+                                break;
+                            case Server.WHAT_GETDOCS:
+                                if (jo.get("error") == null) {
+                                    mDocUuid = "";
+                                    mDocuments = new GsonBuilder().create().fromJson(jo.getAsJsonObject("data"), Documents.class);
+                                    _b.docs.setAdapter(new DocsAdapter(MainActivity.this, R.layout.sp_docs_item, mDocuments.documents.toArray(new Documents.Document[0])));
+                                    ((ArrayAdapter) _b.docs.getAdapter()).notifyDataSetChanged();
+                                } else {
+                                    Dlg.createDialog(MainActivity.this, jo.get("message").getAsString()).setOk(null);
                                 }
                                 break;
                             case Server.WHAT_PARSE_STORE_STRING:
@@ -259,10 +360,25 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
                                     Intent suggestIntent = new Intent(MainActivity.this, SuggestGoodsActivity.class);
                                     suggestIntent.putExtra("data", jo.toString());
                                     startActivity(suggestIntent);
+                                } else {
+                                    Dlg.createDialog(MainActivity.this, jo.get("message").getAsString()).setOk(null);
+                                }
+                                break;
+                            case Server.WHAT_PARSE_STORE_QTY:
+                            case Server.WHAT_PARSE_STORE_PRICE:
+                            case Server.WHAT_PARSE_STORE_AMOUNT:
+                                if (jo.get("error") == null) {
+                                    mSpeechResult.clear();
+                                    _b.rvResult.getAdapter().notifyDataSetChanged();
+                                } else {
+                                    Dlg.createDialog(MainActivity.this, jo.get("message").getAsString()).setOk(null);
                                 }
                                 break;
                         }
                     }
+                    break;
+                case Server.BROADCAST_SOCKET_ERROR:
+                    Dlg.createDialog(MainActivity.this, intent.getStringExtra(Server.SOCKET_REPLY)).setOk(null);
                     break;
                 default:
                     break;
@@ -294,6 +410,37 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         }
     }
 
+    private boolean isDocConnected() {
+        return !mDocUuid.isEmpty();
+    }
+
+    class DocsAdapter extends ArrayAdapter<Documents.Document> {
+
+        public DocsAdapter(@NonNull Context context, int resource, Documents.Document [] objects) {
+            super(context, resource, objects);
+        }
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return getCustomDropDownView(position, convertView, parent);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return getCustomDropDownView(position, convertView, parent);
+        }
+
+        public View getCustomDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            SpDocsItemBinding db = SpDocsItemBinding.inflate(getLayoutInflater(), parent, false);
+            Documents.Document d = mDocuments.documents.get(position);
+            db.txtDocType.setText(d.typename);
+            db.txtDate.setText(d.date);
+            db.txtDocNumber.setText(d.docnumber);
+            return db.getRoot();
+        }
+    }
+
     class ResultAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         private class ResultViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -316,7 +463,22 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
                 String str = mSpeechResult.get(i);
                 JsonObject jo = new JsonObject();
                 jo.addProperty("data", str);
-                sendRequest(Server.WHAT_PARSE_STORE_STRING, jo.toString().replace("\"", "\\\""));
+                int command = 0;
+                switch (mMode) {
+                    case MODE_NAME:
+                        command = Server.WHAT_PARSE_STORE_STRING;
+                        break;
+                    case MODE_QTY:
+                        command = Server.WHAT_PARSE_STORE_QTY;
+                        break;
+                    case MODE_PRICE:
+                        command = Server.WHAT_PARSE_STORE_PRICE;
+                        break;
+                    case MODE_AMOUNT:
+                        command = Server.WHAT_PARSE_STORE_AMOUNT;
+                        break;
+                }
+                sendRequest(command, jo.toString().replace("\"", "\\\""));
             }
         }
 

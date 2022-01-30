@@ -127,11 +127,14 @@ public class SuggestGoodsActivity extends ActivityRoot {
                                 if (jo.get("error") == null) {
                                     finish();
                                 } else {
-                                    Toast.makeText(SuggestGoodsActivity.this, jo.get("message").getAsString(), Toast.LENGTH_LONG).show();
+                                    Dlg.createDialog(SuggestGoodsActivity.this, jo.get("message").getAsString()).setOk(null);
                                 }
                                 break;
                         }
                     }
+                    break;
+                case Server.BROADCAST_SOCKET_ERROR:
+                    Dlg.createDialog(SuggestGoodsActivity.this, intent.getStringExtra(Server.SOCKET_REPLY)).setOk(null);
                     break;
             }
         }
