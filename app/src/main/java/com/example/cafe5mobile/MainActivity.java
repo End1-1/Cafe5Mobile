@@ -268,7 +268,7 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         StrictMode.setThreadPolicy(policy);
         try {
             DatagramSocket ds = new DatagramSocket();
-            ds.setSoTimeout(2000);
+            ds.setSoTimeout(4000);
             ds.setBroadcast(true);
             DatagramPacket dp = new DatagramPacket(data, data.length, getBroadcastAddress(), Server.PORT);
             ds.send(dp);
