@@ -15,4 +15,5 @@ public class Server {
     public static final int WHAT_PARSE_STORE_QTY = 5;
     public static final int WHAT_PARSE_STORE_PRICE = 6;
     public static final int WHAT_PARSE_STORE_AMOUNT = 7;
+    public static final int WHAT_SET_ACTIVE_WINDOW = 8;
 }

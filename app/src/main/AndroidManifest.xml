@@ -21,7 +21,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Cafe5Mobile">
         <activity
+            android:name=".RepeatLastActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity
             android:name=".SuggestGoodsActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

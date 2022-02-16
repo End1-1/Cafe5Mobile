@@ -72,6 +72,7 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         _b = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(_b.getRoot());
         _b.btnConnect.setOnClickListener(this);
+        _b.btnRepeatLast.setOnClickListener(this);
         _b.rvResult.setLayoutManager(new LinearLayoutManager(this));
         _b.rvResult.setAdapter(new ResultAdapter());
         _b.docs.setAdapter(new DocsAdapter(this, R.layout.sp_docs_item, mDocuments.documents.toArray(new Documents.Document[0])));
@@ -81,6 +82,9 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
                 Documents.Document d = mDocuments.documents.get(i);
                 mDocUuid = d.windowid;
                 Preference.setString("windowuuid", mDocUuid);
+                JsonObject jo = new JsonObject();
+                jo.addProperty("windowuuid", mDocUuid);
+                sendRequest(Server.WHAT_SET_ACTIVE_WINDOW, jo.toString().replace("\"", "\\\""));
             }
 
             @Override
@@ -268,7 +272,7 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         StrictMode.setThreadPolicy(policy);
         try {
             DatagramSocket ds = new DatagramSocket();
-            ds.setSoTimeout(4000);
+            ds.setSoTimeout(10000);
             ds.setBroadcast(true);
             DatagramPacket dp = new DatagramPacket(data, data.length, getBroadcastAddress(), Server.PORT);
             ds.send(dp);
@@ -359,6 +363,7 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
                                     _b.rvResult.getAdapter().notifyDataSetChanged();
                                     Intent suggestIntent = new Intent(MainActivity.this, SuggestGoodsActivity.class);
                                     suggestIntent.putExtra("data", jo.toString());
+                                    suggestIntent.putExtra("windowid", mDocUuid);
                                     startActivity(suggestIntent);
                                 } else {
                                     Dlg.createDialog(MainActivity.this, jo.get("message").getAsString()).setOk(null);
@@ -407,6 +412,11 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
             case R.id.btnConnect:
                 sendServerRequest();
                 break;
+            case R.id.btnRepeatLast:
+                Intent repeatIntent = new Intent(this, RepeatLastActivity.class);
+                Preference.setString("windowuuid", mDocUuid);
+                startActivity(repeatIntent);
+                break;
         }
     }
 
@@ -434,7 +444,17 @@ public class MainActivity extends ActivityRoot implements View.OnClickListener {
         public View getCustomDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
             SpDocsItemBinding db = SpDocsItemBinding.inflate(getLayoutInflater(), parent, false);
             Documents.Document d = mDocuments.documents.get(position);
-            db.txtDocType.setText(d.typename);
+            String typetext = d.typename;
+            if (!d.outputstorename.isEmpty()) {
+                typetext += " " + d.outputstorename;
+            }
+            if (!d.inputstorename.isEmpty()) {
+                if (!d.outputstorename.isEmpty()) {
+                    typetext += " ->";
+                }
+                typetext += " " + d.inputstorename;
+            }
+            db.txtDocType.setText(typetext);
             db.txtDate.setText(d.date);
             db.txtDocNumber.setText(d.docnumber);
             return db.getRoot();

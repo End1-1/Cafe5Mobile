@@ -8,8 +8,8 @@
 
     <ImageButton
         android:id="@+id/btnMic"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="16dp"
         android:background="@null"
@@ -21,8 +21,8 @@
 
     <ImageButton
         android:id="@+id/btnMicQty"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="16dp"
         android:background="@null"
@@ -34,8 +34,8 @@
 
     <ImageButton
         android:id="@+id/btnMicPrice"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="16dp"
         android:background="@null"
@@ -47,8 +47,8 @@
 
     <ImageButton
         android:id="@+id/btnMicTotal"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="16dp"
         android:background="@null"
@@ -59,9 +59,22 @@
         tools:ignore="SpeakableTextPresentCheck" />
 
     <ImageButton
+        android:id="@+id/btnRepeatLast"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@null"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnMicTotal"
+        app:srcCompat="@drawable/repeat"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <ImageButton
         android:id="@+id/btnConnect"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="16dp"
         android:background="@null"
